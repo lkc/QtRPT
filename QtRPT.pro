@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui xml
+QT       += core gui xml xmlpatterns
 greaterThan(QT_MAJOR_VERSION, 4){
 QT += widgets printsupport
 DEFINES += HAVE_QT5
@@ -19,15 +19,18 @@ SOURCES += main.cpp\
     qtrpt.cpp \
     exampledlg1.cpp \
     exampledlg3.cpp \
-    exampledlg2.cpp
+    exampledlg2.cpp \
+    exampledlg4.cpp
 
 HEADERS  += mainwindow.h \
     qtrpt.h \
     exampledlg1.h \
     exampledlg3.h \
-    exampledlg2.h
+    exampledlg2.h \
+    exampledlg4.h
 
 FORMS    += mainwindow.ui \
     exampledlg1.ui \
     exampledlg3.ui \
-    exampledlg2.ui
+    exampledlg2.ui \
+    exampledlg4.ui

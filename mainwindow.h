@@ -6,6 +6,7 @@
 #include "exampledlg1.h"
 #include "exampledlg2.h"
 #include "exampledlg3.h"
+#include "exampledlg4.h"
 
 namespace Ui {
     class MainWindow;

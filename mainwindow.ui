@@ -47,6 +47,13 @@
            </property>
           </widget>
          </item>
+         <item>
+          <widget class="QRadioButton" name="rBtn4">
+           <property name="text">
+            <string>Condtionally show fields</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
        <item>

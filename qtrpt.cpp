@@ -8,6 +8,8 @@ e-mail: aliks-os@yandex.ru
 
 #include "qtrpt.h"
 #include "qprintpreviewwidget.h"
+#include <QXmlQuery>
+#include <QXmlResultItems>
 
 QtRPT::QtRPT(QWidget *parent) : QWidget(parent) {
     xmlDoc = new QDomDocument("Reports");
@@ -70,94 +72,97 @@ void QtRPT::drawField(QDomNode n, int bandTop) {
     QDomNode c = n.firstChild();
     while(!c.isNull()) {
         QDomElement e = c.toElement(); // try to convert the node to an element.
-        if ((!e.isNull()) && (e.tagName() == "TContainerField")) {         
-            QFont font(e.attribute("fontFamily"),e.attribute("fontSize").toInt());
-            font.setBold(e.attribute("fontBold").toInt());
-            font.setItalic(e.attribute("fontItalic").toInt());
-            font.setUnderline(e.attribute("fontUnderline").toInt());
+        if ((!e.isNull()) && (e.tagName() == "TContainerField")) {
+            if (isFieldVisible(e)) {
 
-            painter.setFont(font);
-            painter.setPen(Qt::black);
+                QFont font(e.attribute("fontFamily"),e.attribute("fontSize").toInt());
+                font.setBold(e.attribute("fontBold").toInt());
+                font.setItalic(e.attribute("fontItalic").toInt());
+                font.setUnderline(e.attribute("fontUnderline").toInt());
 
-            int left_ = e.attribute("left").toInt()*koefRes_w;
-            int top_ = (bandTop+e.attribute("top").toInt())*koefRes_h;
-            int width_ = (e.attribute("width").toInt()-1)*koefRes_w;;
-            int height_ = e.attribute("height").toInt()*koefRes_h;
+                painter.setFont(font);
+                painter.setPen(Qt::black);
 
-            int cor = QFontMetrics(font).height() * koefRes_h;
-            QRect textRect(left_, top_-height_, width_, height_);
-            textRect.translate(0, cor );
+                int left_ = e.attribute("left").toInt()*koefRes_w;
+                int top_ = (bandTop+e.attribute("top").toInt())*koefRes_h;
+                int width_ = (e.attribute("width").toInt()-1)*koefRes_w;;
+                int height_ = e.attribute("height").toInt()*koefRes_h;
 
-            QPen pen = painter.pen();
+                int cor = QFontMetrics(font).height() * koefRes_h;
+                QRect textRect(left_, top_-height_, width_, height_);
+                textRect.translate(0, cor );
 
-            Qt::Alignment al;
-            Qt::Alignment alH, alV;
-            if (e.attribute("aligmentH") == "hRight")   alH = Qt::AlignRight;
-            if (e.attribute("aligmentH") == "hLeft")    alH = Qt::AlignLeft;
-            if (e.attribute("aligmentH") == "hCenter")  alH = Qt::AlignHCenter;
-            if (e.attribute("aligmentH") == "hJustify") alH = Qt::AlignJustify;
-            if (e.attribute("aligmentV") == "vTop")     alV = Qt::AlignTop;
-            if (e.attribute("aligmentV") == "vBottom")  alV = Qt::AlignBottom;
-            if (e.attribute("aligmentV") == "vCenter")  alV = Qt::AlignVCenter;
-            al = alH | alV;  //colorFromString(e.attribute("borderRight"))
-			
-            if ( colorFromString(e.attribute("backgroundColor")) != QColor(255,255,255,0))
-                painter.fillRect(left_+1,top_+1,width_-2,height_-2,colorFromString(e.attribute("backgroundColor")));
+                QPen pen = painter.pen();
 
-            //Set border width
-            pen.setWidth(e.attribute("borderWidth","1").replace("px","").toInt()*2);
-            //Set border style
-            QString borderStyle = e.attribute("borderStyle","solid");
-            if (borderStyle == "dashed")
-                pen.setStyle(Qt::DashLine);
-            else if (borderStyle == "dotted")
-                pen.setStyle(Qt::DotLine);
-            else if (borderStyle == "dot-dash")
-                pen.setStyle(Qt::DashDotLine);
-            else if (borderStyle == "dot-dot-dash")
-                pen.setStyle(Qt::DashDotDotLine);
-            else
-                pen.setStyle(Qt::SolidLine);
+                Qt::Alignment al;
+                Qt::Alignment alH, alV;
+                if (e.attribute("aligmentH") == "hRight")   alH = Qt::AlignRight;
+                if (e.attribute("aligmentH") == "hLeft")    alH = Qt::AlignLeft;
+                if (e.attribute("aligmentH") == "hCenter")  alH = Qt::AlignHCenter;
+                if (e.attribute("aligmentH") == "hJustify") alH = Qt::AlignJustify;
+                if (e.attribute("aligmentV") == "vTop")     alV = Qt::AlignTop;
+                if (e.attribute("aligmentV") == "vBottom")  alV = Qt::AlignBottom;
+                if (e.attribute("aligmentV") == "vCenter")  alV = Qt::AlignVCenter;
+                al = alH | alV;  //colorFromString(e.attribute("borderRight"))
 
-            if ( colorFromString(e.attribute("borderTop")) != QColor(255,255,255,0) ) {
-                pen.setColor(colorFromString(e.attribute("borderTop")));
-                painter.setPen(pen);
-                painter.drawLine(left_, top_, left_ + width_, top_);
-            }
-            if ( colorFromString(e.attribute("borderBottom")) != QColor(255,255,255,0) ) {
-                pen.setColor(colorFromString(e.attribute("borderBottom")));
-                painter.setPen(pen);
-                painter.drawLine(left_, top_ + height_, left_ + width_, top_ + height_);
-            }
-            if ( colorFromString(e.attribute("borderLeft")) != QColor(255,255,255,0) ) {
-                pen.setColor(colorFromString(e.attribute("borderLeft")));
-                painter.setPen(pen);
-                painter.drawLine(left_, top_, left_, top_ + height_);
-            }
-            if ( colorFromString(e.attribute("borderRight")) != QColor(255,255,255,0) ) {
-                pen.setColor(colorFromString(e.attribute("borderRight")));
-                painter.setPen(pen);
-                painter.drawLine(left_ + width_, top_, left_ + width_, top_ + height_);
-            }
+                if ( colorFromString(e.attribute("backgroundColor")) != QColor(255,255,255,0))
+                    painter.fillRect(left_+1,top_+1,width_-2,height_-2,colorFromString(e.attribute("backgroundColor")));
 
-            if (e.attribute("type","label") == "label") { //NOT Proccess if field set as ImageField
-                QString txt = sectionField(e.attribute("value"));
-                pen.setColor(colorFromString(e.attribute("fontColor")));
-                painter.setPen(pen);
-                painter.drawText(left_+10,top_,width_-10,height_, al | Qt::TextDontClip, txt);
-            }
-            if (e.attribute("type","label") == "labelImage") { //Proccess field as ImageField
-                QImage image = sectionFieldImage(e.attribute("value"));
-                if (!image.isNull()) {
-                    QRectF target(left_, top_, width_, height_);
-                    painter.drawImage(target,image);
+                //Set border width
+                pen.setWidth(e.attribute("borderWidth","1").replace("px","").toInt()*2);
+                //Set border style
+                QString borderStyle = e.attribute("borderStyle","solid");
+                if (borderStyle == "dashed")
+                    pen.setStyle(Qt::DashLine);
+                else if (borderStyle == "dotted")
+                    pen.setStyle(Qt::DotLine);
+                else if (borderStyle == "dot-dash")
+                    pen.setStyle(Qt::DashDotLine);
+                else if (borderStyle == "dot-dot-dash")
+                    pen.setStyle(Qt::DashDotDotLine);
+                else
+                    pen.setStyle(Qt::SolidLine);
+
+                if ( colorFromString(e.attribute("borderTop")) != QColor(255,255,255,0) ) {
+                    pen.setColor(colorFromString(e.attribute("borderTop")));
+                    painter.setPen(pen);
+                    painter.drawLine(left_, top_, left_ + width_, top_);
                 }
-            }
-            if (e.attribute("type","label") == "image") {  //Proccess as static ImageField
-                QByteArray byteArray;
-                byteArray = QByteArray::fromBase64(e.attribute("picture","text").toLatin1());
-                QPixmap pixmap = QPixmap::fromImage(QImage::fromData(byteArray, "PNG"));
-                painter.drawPixmap(left_,top_,width_,height_,pixmap);
+                if ( colorFromString(e.attribute("borderBottom")) != QColor(255,255,255,0) ) {
+                    pen.setColor(colorFromString(e.attribute("borderBottom")));
+                    painter.setPen(pen);
+                    painter.drawLine(left_, top_ + height_, left_ + width_, top_ + height_);
+                }
+                if ( colorFromString(e.attribute("borderLeft")) != QColor(255,255,255,0) ) {
+                    pen.setColor(colorFromString(e.attribute("borderLeft")));
+                    painter.setPen(pen);
+                    painter.drawLine(left_, top_, left_, top_ + height_);
+                }
+                if ( colorFromString(e.attribute("borderRight")) != QColor(255,255,255,0) ) {
+                    pen.setColor(colorFromString(e.attribute("borderRight")));
+                    painter.setPen(pen);
+                    painter.drawLine(left_ + width_, top_, left_ + width_, top_ + height_);
+                }
+
+                if (e.attribute("type","label") == "label") { //NOT Proccess if field set as ImageField
+                    QString txt = sectionField(e.attribute("value"));
+                    pen.setColor(colorFromString(e.attribute("fontColor")));
+                    painter.setPen(pen);
+                    painter.drawText(left_+10,top_,width_-10,height_, al | Qt::TextDontClip, txt);
+                }
+                if (e.attribute("type","label") == "labelImage") { //Proccess field as ImageField
+                    QImage image = sectionFieldImage(e.attribute("value"));
+                    if (!image.isNull()) {
+                        QRectF target(left_, top_, width_, height_);
+                        painter.drawImage(target,image);
+                    }
+                }
+                if (e.attribute("type","label") == "image") {  //Proccess as static ImageField
+                    QByteArray byteArray;
+                    byteArray = QByteArray::fromBase64(e.attribute("picture","text").toLatin1());
+                    QPixmap pixmap = QPixmap::fromImage(QImage::fromData(byteArray, "PNG"));
+                    painter.drawPixmap(left_,top_,width_,height_,pixmap);
+                }
             }
         }
         c = c.nextSibling();
@@ -374,6 +379,32 @@ void QtRPT::drawBackground(QPainter &painter) {
                            pw*koefRes_w,
                            ph*koefRes_h, *m_backgroundImage);
     }
+}
+
+bool QtRPT::isFieldVisible(const QDomElement &e)
+{
+    QString condition = e.attribute("showIf");
+    if (condition.isNull())
+        return true;
+    condition = sectionField(condition);
+    return evaluateExpression(condition) == "true";
+}
+
+QString QtRPT::evaluateExpression(const QString &exp) const
+{
+    // Use XQuery as an expression evaluator since it
+    // is built in although it would probably be more efficient to
+    // use something else.
+    QXmlQuery query;
+    // QXMLQuery wants to return a node so need to add tags
+    query.setQuery(QString("<e>{%1}</e>").arg(exp));
+    if (query.isValid()) {
+        QString result;
+        query.evaluateTo(&result);
+        // strip tags and the newline that gets added to result
+        return result.mid(3, result.length() - 8);
+    }
+    return QString();
 }
 
 void QtRPT::processMasterData(QPrinter *printer, int &y, bool draw, int pageReport) {

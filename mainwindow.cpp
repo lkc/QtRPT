@@ -17,6 +17,9 @@ void MainWindow::showReport() {
     if (ui->rBtn3->isChecked()) {
         dlg = new ExampleDlg3(this);
     }
+    if (ui->rBtn4->isChecked()) {
+        dlg = new ExampleDlg4(this);
+    }
 
     if (dlg != 0) {
         dlg->exec();

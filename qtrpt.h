@@ -77,6 +77,8 @@ private:
     void processMasterData(QPrinter *printer, int &y, bool draw, int pageReport);
     void setPageSettings(QPrinter *printer, QDomElement docElem);
     void drawBackground(QPainter &painter);
+    bool isFieldVisible(const QDomElement &e);
+    QString evaluateExpression(const QString& exp) const;
 
 protected:
     bool eventFilter(QObject *obj, QEvent *e);
